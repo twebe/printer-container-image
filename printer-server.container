@@ -1,0 +1,12 @@
+[Unit]
+Description=Printer Server
+After=local-fs.target
+
+[Container]
+ContainerName=printer-server
+Image=localhost/printer-image:latest
+PublishPort=6310:631
+
+[Install]
+# Start by default on boot
+WantedBy=multi-user.target default.target
