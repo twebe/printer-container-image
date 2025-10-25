@@ -42,34 +42,50 @@ Optional: make it the default printer:
 sudo lpadmin -d Panasonic_KX_MB2000
 ```
 
-## Start as a user service (Quadlets / podman systemd) ⚙️
+## Start as a user service ⚙️
+
+### Linux (Quadlets / podman systemd) 🐧
 
 Copy the quadlet file to the user systemd folder and reload:
 
 ```bash
-cp ./printer-server.container ~/.config/containers/systemd/
+cp ./linux/printer-server.container ~/.config/containers/systemd/
 systemctl --user daemon-reload
 systemctl --user enable --now printer-server.container
 ```
 
 (Adjust unit name if different.)
 
+### macOS (launchd) 🍎
+
+Copy the plist to your user LaunchAgents and register it with launchd using bootstrap (modern API):
+
+```bash
+# copy plist to user LaunchAgents
+cp ./mac/com.user.printer-server.plist ~/Library/LaunchAgents/
+
+# register (bootstrap) into the current user's GUI domain
+launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.user.printer-server.plist
+```
+
+Bootstrap registers the job persistently for the user. To trigger an immediate start after bootstrap you can use launchctl kickstart if needed.
+
 ## Testing and troubleshooting 🔍
 
-- 📋 List printers and status:
+- List printers and status:
   lpstat -p -d
 
-- 🖨️ Print a test file:
+- Print a test file:
   lp -d Panasonic_KX_MB2000 /path/to/test.pdf
 
-- 🔧 Set or confirm printer options:
+- Set or confirm printer options:
   lpoptions -p Panasonic_KX_MB2000 -l
   lpoptions -p Panasonic_KX_MB2000 -o PageSize=A4
 
 - If jobs fail, check CUPS logs inside the container (example):
   podman exec -it printer-server cat /var/log/cups/error_log
 
-- 🔁 Restart the container if needed:
+- Restart the container if needed:
   podman restart printer-server
 
 ## Notes 📝
