@@ -1,26 +1,78 @@
-# Printer Container Image
-Container Image with Cups Printer Server to continue using a very old printer which isn't working anymore with current Linux Distributions.
+# Printer Container Image 🖨️
 
-# Build the Container Image
+A small container image running CUPS to support the old Panasonic KX-MB2000 printer that no longer works on current Linux distributions or MacOS. 🧾
 
-The image can be build via podman using:
+## Prerequisites ✅
 
-`podman build . --tag printer-image`
+- 🐳 Podman (or Docker)
+- 🔑 root or sudo access to add printers on the host when needed
 
-# Start the Container manually
+## Build 🚀
 
-The container can be started by:
+Build the image with podman:
 
-`podman run -d --name printer-server -p 6310:631 printer-image`
+```bash
+podman build . --tag printer-image
+```
 
-This will map the exposed port 631 of cups running in the container to the outsie port 6310. This will prevent a conflict with a potentially running cups server on the host system.
+## Run (manual) ▶️
 
-# Start the Container automatically as Service using Quadlets
+Run the container and map container CUPS port 631 to host port 6310 to avoid conflicts with a host CUPS:
 
-Copy the file *printer-server.container* to *~/.config/containers/systemd*:
+```bash
+podman run -d --name printer-server -p 6310:631 printer-image
+```
 
-`cp ./printer-server.container ~/.config/containers/systemd`
+This exposes CUPS inside the container on ipp://localhost:6310.
 
-Reload *systemd*:
+## Add the PostScript printer to the host ➕
 
-`systemctl --user daemon-reload`
+On the host, register the container-hosted printer as a PostScript printer (adjust the PPD path if needed):
+
+```bash
+sudo lpadmin -p Panasonic_KX_MB2000 -E \
+  -v ipp://localhost:6310/printers/panasonic-printer \
+  -P ./ppd/L_Panasonic-MB2000-postscript.ppd \
+  -o media=A4
+```
+
+Optional: make it the default printer:
+
+```bash
+sudo lpadmin -d Panasonic_KX_MB2000
+```
+
+## Start as a user service (Quadlets / podman systemd) ⚙️
+
+Copy the quadlet file to the user systemd folder and reload:
+
+```bash
+cp ./printer-server.container ~/.config/containers/systemd/
+systemctl --user daemon-reload
+systemctl --user enable --now printer-server.container
+```
+
+(Adjust unit name if different.)
+
+## Testing and troubleshooting 🔍
+
+- 📋 List printers and status:
+  lpstat -p -d
+
+- 🖨️ Print a test file:
+  lp -d Panasonic_KX_MB2000 /path/to/test.pdf
+
+- 🔧 Set or confirm printer options:
+  lpoptions -p Panasonic_KX_MB2000 -l
+  lpoptions -p Panasonic_KX_MB2000 -o PageSize=A4
+
+- If jobs fail, check CUPS logs inside the container (example):
+  podman exec -it printer-server cat /var/log/cups/error_log
+
+- 🔁 Restart the container if needed:
+  podman restart printer-server
+
+## Notes 📝
+
+- The container exposes CUPS on host port 6310; ensure that port is free and accessible.
+- Update the PPD path in the lpadmin command to where you stored the PPD on the host.
