@@ -4,8 +4,8 @@ A small container image running CUPS to support the old Panasonic KX-MB2000 prin
 
 ## Prerequisites ✅
 
-- 🐳 Podman (or Docker)
-- 🔑 root or sudo access to add printers on the host when needed
+- Podman (or Docker)
+- root or sudo access to add printers on the host when needed
 
 ## Build 🚀
 
@@ -91,4 +91,3 @@ Bootstrap registers the job persistently for the user. To trigger an immediate s
 ## Notes 📝
 
 - The container exposes CUPS on host port 6310; ensure that port is free and accessible.
-- Update the PPD path in the lpadmin command to where you stored the PPD on the host.
